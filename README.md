@@ -65,20 +65,46 @@ From here you can install the locally built files through `zkg install ./icsnpp-
 
 Or you can manually run the parser without installing it: `zeek ./build/c1222.hlto ./scripts/__load__.zeek  -Cr <pcap>`
 
+## Custom Ports
+
+The parser uses port-based analyzer registration for both TCP and UDP. The default server ports are `1153/tcp` and `1153/udp`.
+
+To add TCP port 12345 while keeping the default TCP port, add the following to `local.zeek`:
+
+```zeek
+redef C1222::c1222_ports_tcp += { 12345/tcp };
+```
+
+To add UDP port 12345 while keeping the default UDP port, add:
+
+```zeek
+redef C1222::c1222_ports_udp += { 12345/udp };
+```
+
+As an alternative, additional TCP and UDP ports can be supplied as a comma-separated environment variable:
+
+```bash
+export ZEEK_C1222_PORTS="12345/tcp,12345/udp"
+```
+
+Entries must use the `NUMBER/tcp` or `NUMBER/udp` format and a port number from 0 through 65535. Invalid entries are ignored with a warning. Environment-provided ports are merged into the corresponding `C1222::c1222_ports_tcp` or `C1222::c1222_ports_udp` set.
+
+The configured transport sets are registered directly with their respective C12.22 analyzers. They are also added to Zeek's `likely_server_ports` set to improve originator/responder direction inference when the initial handshake is unavailable. Adding a port only to `likely_server_ports` does **not** enable C12.22 parsing.
+
+Port configuration is read when Zeek initializes. Restart a standalone Zeek process, or redeploy/restart Zeek cluster workers, after changing `local.zeek` or `ZEEK_C1222_PORTS`. A parser rebuild or package reinstall is not required for port-only changes.
+
+Direct port registration assigns all traffic whose inferred server port matches a configured port to the C12.22 analyzer. Configure only ports dedicated to C12.22; unrelated or malformed traffic on those ports incurs parsing overhead and will be rejected by the analyzer when it does not parse as C12.22.
+
 ## Logging Capabilities
 
 ### C12.22 Summary Log (c1222.log)
 
 #### Overview
 
-This log summarizes, by packet, ANSI C12.22 frames transmitted over 1153/tcp or 1153/udp to `c1222.log`. 
-This log is **enabled** by default. Users can disable it by appending `C1222::log_summary=F` to the `zeek` 
+This log summarizes, by packet, ANSI C12.22 frames transmitted over configured TCP or UDP ports to `c1222.log`.
+This log is **enabled** by default. Users can disable it by appending `C1222::log_summary=F` to the `zeek`
 command on the command line or by adding `redef C1222::log_summary = F;` to the `local.zeek` file.
-The port can be overriden by redefining the `c1222_ports_tcp` and `c1222_ports_udp` variables, respectively, e.g.:
-
-```
-$ zeek -C -r c1222_tcp.pcap local "C1222::c1222_ports_tcp={ 40712/tcp }"
-```
+See [Custom Ports](#custom-ports) for additive TCP and UDP configuration examples.
 
 #### Fields Captured
 

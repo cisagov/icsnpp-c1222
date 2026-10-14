@@ -1,0 +1,12 @@
+direct-tcp
+1577	12345	tcp
+1577	12345	tcp
+direct-udp
+1577	12345	udp
+1577	12345	udp
+environment-tcp
+1577	12345	tcp
+1577	12345	tcp
+environment-udp
+1577	12345	udp
+1577	12345	udp

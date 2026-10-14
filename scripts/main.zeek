@@ -77,9 +77,51 @@ export {
     const c1222_ports_tcp: set[port] = { 1153/tcp } &redef;
     const c1222_ports_udp: set[port] = { 1153/udp } &redef;
 }
-redef likely_server_ports += { c1222_ports_tcp, c1222_ports_udp };
+
+global c1222_ports_str: string = getenv("ZEEK_C1222_PORTS");
+
+function add_environment_ports()
+    {
+    if ( c1222_ports_str == "" )
+        return;
+
+    local custom_ports = split_string(c1222_ports_str, /,/);
+
+    for ( port_idx in custom_ports )
+        {
+        local port_string = strip(custom_ports[port_idx]);
+
+        if ( /^[0-9]{1,5}\/(tcp|udp)$/ !in port_string )
+            {
+            Reporter::warning(fmt("Ignoring invalid ZEEK_C1222_PORTS entry '%s'; expected NUMBER/tcp or NUMBER/udp", port_string));
+            next;
+            }
+
+        local port_parts = split_string(port_string, /\//);
+        local port_number = to_count(port_parts[0]);
+
+        if ( port_number > 65535 )
+            {
+            Reporter::warning(fmt("Ignoring out-of-range ZEEK_C1222_PORTS entry '%s'", port_string));
+            next;
+            }
+
+        if ( port_parts[1] == "tcp" )
+            add c1222_ports_tcp[count_to_port(port_number, tcp)];
+        else
+            add c1222_ports_udp[count_to_port(port_number, udp)];
+        }
+    }
 
 event zeek_init() &priority=5 {
+    add_environment_ports();
+
+    for ( p in c1222_ports_tcp )
+        add likely_server_ports[p];
+
+    for ( p in c1222_ports_udp )
+        add likely_server_ports[p];
+
     Analyzer::register_for_ports(Analyzer::ANALYZER_C1222_TCP, c1222_ports_tcp);
     Analyzer::register_for_ports(Analyzer::ANALYZER_C1222_UDP, c1222_ports_udp);
 
