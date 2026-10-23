@@ -127,6 +127,18 @@ function getServiceVectorLog(services: vector of Zeek_C1222::EpsemService): vect
     return service_vector;
 }
 
+# Convert the content bytes of an ASN.1 INTEGER (an AP invocation ID) to its value, read as big-endian
+# unsigned to match Wireshark's c1222.*_AP_invocation_id fields. bytestring_to_count() only accepts 1, 2, 4
+# or 8 byte strings, so the bytes are accumulated one at a time to handle any length up to 8.
+function getInvocationId(id: string): count {
+    local result: count = 0;
+
+    for ( b in id )
+        result = result * 256 + bytestring_to_count(b);
+
+    return result;
+}
+
 # SUMMARY LOG -------------------------------------------------------------
 
 event C1222::AscePdu(c: connection, is_orig: bool, ascepdu: Zeek_C1222::AscePdu) {
@@ -151,7 +163,8 @@ event C1222::AscePdu(c: connection, is_orig: bool, ascepdu: Zeek_C1222::AscePdu)
                 info_summary_log$called_ap_title = getIdString(calledApTitle);
                 break;
             case C1222_ENUMS::AsceElementTags_CALLED_AP_INVOCATION_ID:
-                info_summary_log$called_ap_invocation_id = element$calledApInvocationId$id;
+                if ( 0 < |element$calledApInvocationId$id| && |element$calledApInvocationId$id| <= 8 )
+                    info_summary_log$called_ap_invocation_id = getInvocationId(element$calledApInvocationId$id);
                 break;
             case C1222_ENUMS::AsceElementTags_CALLING_AP_TITLE:
                 local callingApTitle = element$callingApTitle$apTitle;
@@ -178,7 +191,8 @@ event C1222::AscePdu(c: connection, is_orig: bool, ascepdu: Zeek_C1222::AscePdu)
 
                 break;
             case C1222_ENUMS::AsceElementTags_CALLING_AP_INVOCATION_ID:
-                info_summary_log$calling_ap_invocation_id = element$callingApInvocationId$id;
+                if ( 0 < |element$callingApInvocationId$id| && |element$callingApInvocationId$id| <= 8 )
+                    info_summary_log$calling_ap_invocation_id = getInvocationId(element$callingApInvocationId$id);
                 break;
             case C1222_ENUMS::AsceElementTags_CALLING_AUTHENTICATION_VALUE:
                 local authValueTag = element$callingAuthenticationValue$encodingTag;

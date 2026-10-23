@@ -122,9 +122,9 @@ See [Custom Ports](#custom-ports) for additive TCP and UDP configuration example
 | calling_ap_title          | string           | Unique identifier of message initiator             |
 | calling_ae_qualifier      | vector of string | Qualifies data being sent                          |
 | mechanism_name            | string           | Unique security mechanism identifier               |
-| calling_auth_value        | string           | Authenticatin mechanism used                       |
-| called_ap_invocation_id   | string           | Called AP invocation identifier                    |
-| calling_ap_invocation_id  | string           | Calling AP invocation identifier                   |
+| calling_auth_value        | string           | Authentication mechanism used                      |
+| called_ap_invocation_id   | count            | Called AP invocation identifier                    |
+| calling_ap_invocation_id  | count            | Calling AP invocation identifier                   |
 
 * The **`calling_ae_qualifier`** field is comprised of four non-exclusive qualifiers:
     - `TEST` - test message
@@ -154,7 +154,7 @@ Users can disable it by appending `C1222::log_user_information=F` to the `zeek` 
 | padding                       | string            | Padding for segmentation and encryption                   |
 | mac                           | string            | Encryption message authentication code                    |
 | epsem_control                 | vector of string  | Datagram control field                                    |
-| ed_class                      | string            | Transport protocol                                        |
+| ed_class                      | string            | End device class (4-byte device class identifier)         |
 | encrypted_epsem               | string            | Is the epsem encrypted                                    |
 | services                      | vector of string  | EPSEM services sent in packet                             |
 
@@ -185,7 +185,7 @@ enable it by appending `C1222::log_authentication_value=T` to the `zeek` command
 | uid                       | string         | Unique ID for this connection                             |
 | id                        | conn_id        | Default Zeek connection info (IP addresses, ports)        |
 | proto                     | string         | Transport protocol                                        |
-| authentication_mechanism  | string         | Authenticatin mechanism used                              |
+| authentication_mechanism  | string         | Authentication mechanism used                             |
 | indirect_reference        | bool           | Indirect reference bytes present                          |
 | octet_aligned             | string         | Bytes used to define octet aligned authentication         |
 | c1222_key_id              | int            | C12.22 auth key identifier                                |
